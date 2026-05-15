@@ -1,0 +1,7 @@
+warehouse
+warehouse.exe
+*.o
+*.out
+*.exe
+.vscode/
+.DS_Store
