@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra
 
-TARGET = warehouse
+TARGET = dstr-task2
 
 SRCS = main.cpp
 

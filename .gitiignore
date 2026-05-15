@@ -1,5 +1,5 @@
-warehouse
-warehouse.exe
+dstr-task2
+dstr-task2.exe
 *.o
 *.out
 *.exe
