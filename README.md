@@ -143,28 +143,9 @@ For the next task, create a new branch from the latest `main`.
 
 All work must be submitted through a Pull Request.
 
-Workflow:
-
-```text
-Create a feature branch
-↓
-Work locally
-↓
-Commit changes
-↓
-Push the branch to GitHub
-↓
-Create a Pull Request
-↓
-Leader checks the Pull Request
-↓
-Leader merges the Pull Request into main
-```
-
 Only the team leader is allowed to merge Pull Requests.
 
 Members must not press the merge button by themselves.
-
 
 ## Pull Request Checklist
 
@@ -182,6 +163,354 @@ Before creating a Pull Request, check the following:
 □ My data structure is implemented manually.
 □ My code compiles successfully.
 □ My commit message is clear.
+```
+
+---
+
+## Standard GitHub Workflow
+
+All members must follow this workflow when working on their assigned module.
+
+---
+
+### 1. Open VS Code terminal and move to the project folder
+
+Open the terminal in VS Code and move to the local project folder.
+
+```bash
+cd path/to/your/project-folder
+```
+
+Example:
+
+```bash
+cd "C:\Users\Shunto's Device\OneDrive - Asia Pacific University of Technology And Innovation (APU)\APU CYB One Drive\D2-2 One Drive\Data Structures\Data-Structure-Task2"
+```
+
+Check that you are inside the correct Git project:
+
+```bash
+git status
+```
+
+---
+
+### 2. Check GitHub remote connection
+
+Before starting work, check that the local repository is connected to GitHub.
+
+```bash
+git remote -v
+```
+
+Expected result:
+
+```text
+origin  https://github.com/shunshun29/Data-Structure-task2.git (fetch)
+origin  https://github.com/shunshun29/Data-Structure-task2.git (push)
+```
+
+If no remote is shown, run:
+
+```bash
+git remote add origin https://github.com/shunshun29/Data-Structure-task2.git
+```
+
+---
+
+### 3. Move to the main branch
+
+Before starting new work, always move to the `main` branch.
+
+```bash
+git checkout main
+```
+
+---
+
+### 4. Pull the latest code from GitHub main branch
+
+Get the newest version of the project from GitHub.
+
+```bash
+git pull origin main
+```
+
+This makes sure your local `main` branch is up to date.
+
+---
+
+### 5. Create your own working branch
+
+Create a new feature branch for your task.
+
+```bash
+git checkout -b feature/your-task-name
+```
+
+Examples:
+
+```bash
+git checkout -b feature/order-management
+```
+
+```bash
+git checkout -b feature/robot-assignment
+```
+
+```bash
+git checkout -b feature/navigation-stack
+```
+
+```bash
+git checkout -b feature/item-management
+```
+
+```bash
+git checkout -b feature/warehouse-layout
+```
+
+Check that you are on the correct branch:
+
+```bash
+git branch
+```
+
+Example result:
+
+```text
+  main
+* feature/order-management
+```
+
+The branch with `*` is your current branch.
+
+---
+
+### 6. Coding
+
+Work only on your assigned `.hpp` and `.cpp` files.
+
+Examples:
+
+```text
+Order Management:
+- OrderQueue.hpp
+- OrderQueue.cpp
+
+Robot Assignment:
+- RobotCircularQueue.hpp
+- RobotCircularQueue.cpp
+
+Navigation:
+- MovementStack.hpp
+- MovementStack.cpp
+
+Item Management:
+- ItemBST.hpp
+- ItemBST.cpp
+
+Warehouse Layout:
+- WarehouseTree.hpp
+- WarehouseTree.cpp
+```
+
+Do not edit `main.cpp`, `common.hpp`, or `Makefile` without the leader's permission.
+
+---
+
+### 7. Check changed files
+
+After coding, check which files were changed.
+
+```bash
+git status
+```
+
+You can also check the detailed changes:
+
+```bash
+git diff
+```
+
+---
+
+### 8. Add changed files
+
+Add only the files that you intentionally changed.
+
+```bash
+git add file-name
+```
+
+Example:
+
+```bash
+git add OrderQueue.hpp OrderQueue.cpp
+```
+
+Avoid using this unless you are sure:
+
+```bash
+git add .
+```
+
+`git add .` adds all changed files, including files you may not want to commit.
+
+---
+
+### 9. Commit your changes
+
+Commit the added files with a clear message.
+
+```bash
+git commit -m "Clear commit message"
+```
+
+Examples:
+
+```bash
+git commit -m "Implement order queue module"
+```
+
+---
+
+### 10. Push your working branch to GitHub
+
+Push your feature branch to GitHub.
+
+```bash
+git push -u origin feature/your-task-name
+```
+
+Example:
+
+```bash
+git push -u origin feature/order-management
+```
+
+After the first push, you can usually use:
+
+```bash
+git push
+```
+
+---
+
+### 11. Move to the browser and create a Pull Request
+
+After pushing, open the GitHub repository in your browser.
+
+Steps:
+
+```text
+GitHub repository
+↓
+Compare & pull request
+↓
+Write Pull Request title and description
+↓
+Create pull request
+```
+
+Pull Request title example:
+
+```text
+Implement order queue module
+```
+
+Pull Request description example:
+
+```md
+## Summary
+
+Implemented the Order Management module using a custom Queue.
+
+## Changes
+
+- Added OrderQueue.hpp
+- Added OrderQueue.cpp
+- Implemented enqueue, dequeue, peek, and display functions
+
+## Data Structure
+
+- Custom Queue using linked nodes
+
+## Checklist
+
+- [x] I worked on my own feature branch
+- [x] I did not edit main directly
+- [x] I did not change common.hpp without permission
+- [x] I did not use STL containers
+- [x] I did not define another main() function
+- [x] My code compiles
+```
+
+---
+
+### 12. Leader checks and approves the Pull Request
+
+The team leader checks the Pull Request.
+
+The leader checks:
+
+```text
+- The member worked on the correct files
+- The code does not use banned STL containers
+- The code includes common.hpp
+- The code does not contain another main() function
+- The code compiles successfully
+- The data structure is implemented manually
+- The member can explain their data structure choice
+```
+
+Members must not merge their own Pull Requests.
+
+Only the leader is allowed to approve and merge Pull Requests.
+
+---
+
+### 13. Leader merges the Pull Request
+
+If there are no problems, the leader merges the Pull Request into `main`.
+
+Steps on GitHub:
+
+```text
+Pull Request page
+↓
+Check Files changed
+↓
+Check if there are conflicts
+↓
+Merge pull request
+↓
+Confirm merge
+```
+
+After merging, delete the feature branch on GitHub if it is no longer needed.
+
+---
+
+### 14. After the Pull Request is merged
+
+Each member should update their local `main` branch.
+
+```bash
+git checkout main
+git pull origin main
+```
+
+Then delete the local feature branch everytime the task is finished.
+
+```bash
+git branch -d feature/your-task-name
+```
+
+Example:
+
+```bash
+git branch -d feature/order-management
 ```
 
 ---
@@ -324,7 +653,7 @@ git push -u origin feature/order-management
 
 This sends your local branch to GitHub.
 
-After pushing, opne the repository in your browser and create a Pull Request on GitHub.
+After pushing, create a Pull Request on GitHub.
 
 ---
 
@@ -593,7 +922,7 @@ make
 If `make` is not available:
 
 ```bash
-g++ -std=c++17 main.cpp OrderQueue.cpp RobotCircularQueue.cpp MovementStack.cpp ItemBST.cpp WarehouseTree.cpp -o warehouse
+g++ -std=c++17 main.cpp OrderQueue.cpp RobotCircularQueue.cpp MovementStack.cpp ItemBST.cpp WarehouseTree.cpp -o dstr-task2
 ./warehouse
 ```
 
@@ -605,45 +934,33 @@ Use Makefile:
 
 ```bash
 make
-./warehouse
+./dstr-task2
 ```
 
 For Windows PowerShell:
 
 ```powershell
-.\warehouse.exe
+.\dstr-task2.exe
 ```
 
 If `make` is not available:
 
 ```bash
-g++ -std=c++17 main.cpp OrderQueue.cpp RobotCircularQueue.cpp MovementStack.cpp ItemBST.cpp WarehouseTree.cpp -o warehouse
+g++ -std=c++17 main.cpp OrderQueue.cpp RobotCircularQueue.cpp MovementStack.cpp ItemBST.cpp WarehouseTree.cpp -o dstr-task2
 ```
 
 Run:
 
 ```bash
-./warehouse
+./dstr-task2
 ```
 
 or on Windows:
 
 ```powershell
-.\warehouse.exe
+.\dstr-task2.exe
 ```
 
 ---
 
-## Final Rule Summary
 
-```text
-Do not work directly on main.
-Create a feature branch for each task.
-Work only on your own files.
-Create a Pull Request after finishing work.
-Only the leader merges Pull Requests.
-Delete the feature branch after it is merged.
-Start new work from the latest main.
-Do not use banned STL containers.
-Do not change common.hpp or Makefile without permission.
-```
