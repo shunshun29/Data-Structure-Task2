@@ -324,7 +324,7 @@ git push -u origin feature/order-management
 
 This sends your local branch to GitHub.
 
-After pushing, create a Pull Request on GitHub.
+After pushing, opne the repository in your browser and create a Pull Request on GitHub.
 
 ---
 
