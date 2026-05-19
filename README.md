@@ -44,6 +44,119 @@ Important:
 
 ---
 
+## Main Menu Structure and Ownership
+
+### Who Owns `main.cpp`
+
+`main.cpp` is managed **exclusively by the leader**.
+
+Members must **not edit `main.cpp` directly**. The leader is responsible for connecting each module's functions to the correct menu option after all Pull Requests have been merged.
+
+If you want to test menu-like behaviour locally, create your own `test_yourmodule.cpp` file. See the [Unit Testing with Dummy Data](#unit-testing-with-dummy-data) section below.
+
+---
+
+### Menu Number → Module Mapping
+
+The main menu has 11 options. Each option belongs to a specific member's module.
+
+```text
+========== Warehouse Robot Navigation System ==========
+1.  Add New Order                    → Leader        (OrderQueue)
+2.  Display Pending Orders           → Leader        (OrderQueue)
+3.  Process Next Order               → Leader        (OrderQueue)
+4.  Display Robots                   → Member 2      (RobotCircularQueue)
+5.  Assign Robot to Order            → Member 2      (RobotCircularQueue)
+6.  Add Item                         → Member 4      (ItemBST)
+7.  Search Item                      → Member 4      (ItemBST)
+8.  Display Warehouse Layout         → Member 5      (WarehouseTree)
+9.  Generate Route                   → Member 5      (WarehouseTree)
+10. Record Robot Movement            → Member 3      (MovementStack)
+11. Return Robot Using Reverse Path  → Member 3      (MovementStack)
+0.  Exit
+=======================================================
+```
+
+| Menu No. | Feature | Owner | Class | Key Function(s) |
+|---|---|---|---|---|
+| 1 | Add New Order | Leader | `OrderQueue` | `enqueue()` |
+| 2 | Display Pending Orders | Leader | `OrderQueue` | `displayPendingOrders()` |
+| 3 | Process Next Order | Leader | `OrderQueue` | `dequeue()` |
+| 4 | Display Robots | Member 2 | `RobotCircularQueue` | `displayRobots()` |
+| 5 | Assign Robot to Order | Member 2 | `RobotCircularQueue` | `getNextAvailableRobot()` |
+| 6 | Add Item | Member 4 | `ItemBST` | `insert()` |
+| 7 | Search Item | Member 4 | `ItemBST` | `search()` / `searchByName()` |
+| 8 | Display Warehouse Layout | Member 5 | `WarehouseTree` | `displayLayout()` |
+| 9 | Generate Route | Member 5 | `WarehouseTree` | `generateRoute()` |
+| 10 | Record Robot Movement | Member 3 | `MovementStack` | `push()` / `displayPath()` |
+| 11 | Return Robot Using Reverse Path | Member 3 | `MovementStack` | `returnPath()` |
+
+---
+
+### How the Leader Connects Your Module
+
+Once your Pull Request is merged, the leader will update `main.cpp` like this:
+
+```cpp
+// Example: how the leader wires up Member 2's module in main.cpp
+case 4:
+    robotQueue.displayRobots();
+    break;
+
+case 5:
+    Robot assigned;
+    if (robotQueue.getNextAvailableRobot(assigned)) {
+        cout << "Robot " << assigned.robotId << " assigned." << endl;
+    }
+    break;
+```
+
+You do not need to do this yourself. Just make sure your functions match the pre-defined interface exactly.
+
+---
+
+### Testing Your Menu Flow Locally (Without Touching `main.cpp`)
+
+If you want to simulate what your menu option will look like when integrated, create a local `test_yourmodule.cpp` with a small `main()` that calls your functions directly.
+
+Example for Member 3 (Navigation, menu options 10 and 11):
+
+```cpp
+// test_navigation.cpp  (local only — do not commit)
+#include "MovementStack.hpp"
+#include <iostream>
+using namespace std;
+
+int main() {
+    MovementStack stack;
+
+    // Simulate menu option 10: Record Robot Movement
+    cout << "\n[Menu 10] Record Robot Movement" << endl;
+    stack.push("Start");
+    stack.push("ZoneA");
+    stack.push("AisleB");
+    stack.push("Shelf3");
+    stack.displayPath();
+
+    // Simulate menu option 11: Return Robot Using Reverse Path
+    cout << "\n[Menu 11] Return Robot Using Reverse Path" << endl;
+    stack.returnPath();
+
+    return 0;
+}
+```
+
+Compile and run:
+
+```bash
+g++ -std=c++17 test_navigation.cpp MovementStack.cpp -o test_nav
+./test_nav
+```
+
+This lets you verify that your functions produce the correct output **before integration**, without ever touching `main.cpp`.
+
+---
+
 ## Interface Pre-Definition by Leader
 
 Before members start coding their `.cpp` files, the leader will define the **class structure and function signatures** in each `.hpp` file.
