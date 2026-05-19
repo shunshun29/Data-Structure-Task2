@@ -44,11 +44,262 @@ Important:
 
 ---
 
+## Interface Pre-Definition by Leader
+
+Before members start coding their `.cpp` files, the leader will define the **class structure and function signatures** in each `.hpp` file.
+
+This is called **interface-first design**. It allows all members to work in parallel without waiting for each other, because everyone knows exactly what functions to implement.
+
+### Why This Matters
+
+- Members know the exact function names and parameter types they must implement.
+- The leader can write `main.cpp` integration code in advance.
+- Function name mismatches at integration time are avoided.
+- Members can write dummy data tests against a known interface.
+
+### Pre-Defined Interfaces
+
+The leader defines the following interfaces. Members must implement exactly these functions in their `.cpp` files.
+
+---
+
+#### Order Management — `OrderQueue.hpp`
+
+```cpp
+class OrderQueue {
+public:
+    OrderQueue();
+    ~OrderQueue();
+
+    bool isEmpty() const;
+    int size() const;
+
+    void enqueue(const Order& order);   // Add new order to rear
+    bool dequeue(Order& order);         // Remove order from front
+    bool peek(Order& order) const;      // View front order without removing
+
+    void displayPendingOrders() const;  // Print all pending orders
+};
+```
+
+---
+
+#### Robot Assignment — `RobotCircularQueue.hpp`
+
+```cpp
+class RobotCircularQueue {
+public:
+    RobotCircularQueue(int capacity);
+    ~RobotCircularQueue();
+
+    bool isEmpty() const;
+    bool isFull() const;
+    int size() const;
+
+    bool addRobot(const Robot& robot);          // Register a robot
+    bool getNextAvailableRobot(Robot& robot);   // Rotate and get next available robot
+    bool updateRobotStatus(int robotId, RobotStatus status); // Update robot status
+    void displayRobots() const;                 // Print all robots and status
+};
+```
+
+---
+
+#### Robot Navigation — `MovementStack.hpp`
+
+```cpp
+class MovementStack {
+public:
+    MovementStack();
+    ~MovementStack();
+
+    bool isEmpty() const;
+    int size() const;
+
+    void push(const char step[]);   // Record one movement step
+    bool pop(char step[]);          // Remove last step (for backtracking)
+    bool peek(char step[]) const;   // View last step without removing
+
+    void displayPath() const;       // Print full forward path
+    void returnPath();              // Pop and print each step in reverse
+    void clearPath();               // Reset all recorded steps
+};
+```
+
+---
+
+#### Item Management — `ItemBST.hpp`
+
+```cpp
+class ItemBST {
+public:
+    ItemBST();
+    ~ItemBST();
+
+    void insert(const Item& item);              // Insert item into BST
+    bool search(const char itemId[], Item& result) const;  // Search by ID
+    bool searchByName(const char name[], Item& result) const; // Search by name
+    void displayInOrder() const;                // Print all items sorted by ID
+    bool remove(const char itemId[]);           // Delete an item by ID
+};
+```
+
+---
+
+#### Warehouse Layout — `WarehouseTree.hpp`
+
+```cpp
+class WarehouseTree {
+public:
+    WarehouseTree();
+    ~WarehouseTree();
+
+    void buildLayout();                         // Initialize default warehouse structure
+    void displayLayout() const;                 // Print tree layout (zones/aisles/shelves)
+    bool generateRoute(const char from[], const char to[], Route& route); // Find path
+    void displayRoute(const Route& route) const; // Print generated route steps
+};
+```
+
+---
+
+### Member Checklist After Reading Pre-Defined Interfaces
+
+Before writing your `.cpp` file, confirm:
+
+```text
+□ I have read my assigned .hpp file.
+□ I understand the function names, return types, and parameters.
+□ I will not rename or remove any pre-defined function.
+□ I may add private helper functions inside my .cpp as needed.
+□ I will not change the public interface without discussing with the leader.
+```
+
+---
+
+## Unit Testing with Dummy Data
+
+Each member can test their module independently **without waiting for other modules to be completed**.
+
+The key idea: since all modules share the same struct definitions in `common.hpp`, you can create dummy data manually and pass it into your own functions.
+
+### How to Test Your Module Independently
+
+**Step 1 — Compile only your module**
+
+You do not need the full project to compile your own files.
+
+```bash
+g++ -std=c++17 -c YourFile.cpp
+```
+
+If there are no errors, your file compiles correctly on its own.
+
+---
+
+**Step 2 — Write a simple local test**
+
+Create a temporary `test_yourmodule.cpp` file **in your local environment only** (do not commit this file).
+
+Use it to call your own functions with dummy data.
+
+Example for Robot Assignment module:
+
+```cpp
+// test_robotqueue.cpp  (local test only, do not commit)
+#include "RobotCircularQueue.hpp"
+
+int main() {
+    // Create dummy robots using the Robot struct from common.hpp
+    Robot r1;
+    r1.robotId = 1;
+    r1.status = ROBOT_AVAILABLE;
+    r1.assignedOrderId = -1;
+
+    Robot r2;
+    r2.robotId = 2;
+    r2.status = ROBOT_BUSY;
+    r2.assignedOrderId = 5;
+
+    // Test your module functions
+    RobotCircularQueue queue(5);
+    queue.addRobot(r1);
+    queue.addRobot(r2);
+    queue.displayRobots();
+
+    Robot assigned;
+    if (queue.getNextAvailableRobot(assigned)) {
+        cout << "Assigned Robot ID: " << assigned.robotId << endl;
+    }
+
+    return 0;
+}
+```
+
+Compile and run the test:
+
+```bash
+g++ -std=c++17 test_robotqueue.cpp RobotCircularQueue.cpp -o test_robot
+./test_robot
+```
+
+---
+
+**Step 3 — Test examples for each module**
+
+| Module | Dummy Data to Create | Key Functions to Test |
+|---|---|---|
+| Order Management | Create `Order` with orderId, customerName, itemId | `enqueue`, `dequeue`, `displayPendingOrders` |
+| Robot Assignment | Create `Robot` with robotId, status | `addRobot`, `getNextAvailableRobot`, `displayRobots` |
+| Navigation | Use plain strings like `"ZoneA"`, `"AisleB"` as steps | `push`, `displayPath`, `returnPath` |
+| Item Management | Create `Item` with itemId, itemName, location | `insert`, `search`, `displayInOrder` |
+| Warehouse Layout | No external data needed; `buildLayout()` sets it up | `buildLayout`, `displayLayout`, `generateRoute` |
+
+---
+
+**Step 4 — Expected output before integration**
+
+Before submitting your Pull Request, you should be able to run your local test and see sensible output such as:
+
+```text
+--- Pending Orders ---
+Order ID: 1 | Customer: Alice | Item ID: ITEM001 | Status: Pending
+
+--- All Robots ---
+Robot ID: 1 | Status: Available
+Robot ID: 2 | Status: Busy
+
+--- Movement Path ---
+Step 1: Start
+Step 2: ZoneA
+Step 3: AisleB
+Step 4: Shelf3
+--- Returning ---
+Step 4: Shelf3
+Step 3: AisleB
+Step 2: ZoneA
+Step 1: Start
+```
+
+---
+
+### Do Not Commit Local Test Files
+
+Local test files such as `test_yourmodule.cpp` are for your own testing only.
+
+Do not commit them to GitHub.
+
+Add them to `.gitignore` if needed:
+
+```text
+test_*.cpp
+```
+
+---
+
 ## File Creation Rules
 
 Each member must create their own `.hpp` and `.cpp` files.
-
-For example:
 
 ```text
 Order Management:
@@ -100,8 +351,6 @@ Do not use STL containers such as:
 
 The assignment focuses on custom data structures, so each member must manually implement their own structure.
 
-Examples:
-
 | Module | Correct Approach | Do Not Use |
 |---|---|---|
 | Order Management | Custom linked-node Queue | `std::queue` |
@@ -135,7 +384,8 @@ Basic rule:
 
 After the Pull Request is merged, the feature branch should be deleted.
 
-For the next task, create a new branch from the latest `main`.
+For the next task, create a new branch from the latest main.
+```
 
 ---
 
@@ -161,7 +411,9 @@ Before creating a Pull Request, check the following:
 □ I did not define another main() function.
 □ My module includes common.hpp.
 □ My data structure is implemented manually.
-□ My code compiles successfully.
+□ My code compiles successfully (tested with g++ -std=c++17 -c).
+□ I ran a local dummy data test and confirmed output is sensible.
+□ I did not commit local test files (test_*.cpp).
 □ My commit message is clear.
 ```
 
@@ -171,33 +423,14 @@ Before creating a Pull Request, check the following:
 
 All members must follow this workflow when working on their assigned module.
 
----
-
 ### 1. Open VS Code terminal and move to the project folder
-
-Open the terminal in VS Code and move to the local project folder.
 
 ```bash
 cd path/to/your/project-folder
-```
-
-Example:
-
-```bash
-cd "C:\Users\Shunto's Device\OneDrive - Asia Pacific University of Technology And Innovation (APU)\APU CYB One Drive\D2-2 One Drive\Data Structures\Data-Structure-Task2"
-```
-
-Check that you are inside the correct Git project:
-
-```bash
 git status
 ```
 
----
-
 ### 2. Check GitHub remote connection
-
-Before starting work, check that the local repository is connected to GitHub.
 
 ```bash
 git remote -v
@@ -210,39 +443,19 @@ origin  https://github.com/shunshun29/Data-Structure-task2.git (fetch)
 origin  https://github.com/shunshun29/Data-Structure-task2.git (push)
 ```
 
-If no remote is shown, run:
-
-```bash
-git remote add origin https://github.com/shunshun29/Data-Structure-task2.git
-```
-
----
-
 ### 3. Move to the main branch
-
-Before starting new work, always move to the `main` branch.
 
 ```bash
 git checkout main
 ```
 
----
-
 ### 4. Pull the latest code from GitHub main branch
-
-Get the newest version of the project from GitHub.
 
 ```bash
 git pull origin main
 ```
 
-This makes sure your local `main` branch is up to date.
-
----
-
 ### 5. Create your own working branch
-
-Create a new feature branch for your task.
 
 ```bash
 git checkout -b feature/your-task-name
@@ -252,21 +465,9 @@ Examples:
 
 ```bash
 git checkout -b feature/order-management
-```
-
-```bash
 git checkout -b feature/robot-assignment
-```
-
-```bash
 git checkout -b feature/navigation-stack
-```
-
-```bash
 git checkout -b feature/item-management
-```
-
-```bash
 git checkout -b feature/warehouse-layout
 ```
 
@@ -276,183 +477,76 @@ Check that you are on the correct branch:
 git branch
 ```
 
-Example result:
-
-```text
-  main
-* feature/order-management
-```
-
-The branch with `*` is your current branch.
-
----
-
 ### 6. Coding
 
 Work only on your assigned `.hpp` and `.cpp` files.
 
-Examples:
-
-```text
-Order Management:
-- OrderQueue.hpp
-- OrderQueue.cpp
-
-Robot Assignment:
-- RobotCircularQueue.hpp
-- RobotCircularQueue.cpp
-
-Navigation:
-- MovementStack.hpp
-- MovementStack.cpp
-
-Item Management:
-- ItemBST.hpp
-- ItemBST.cpp
-
-Warehouse Layout:
-- WarehouseTree.hpp
-- WarehouseTree.cpp
-```
-
 Do not edit `main.cpp`, `common.hpp`, or `Makefile` without the leader's permission.
-
----
 
 ### 7. Check changed files
 
-After coding, check which files were changed.
-
 ```bash
 git status
-```
-
-You can also check the detailed changes:
-
-```bash
 git diff
 ```
 
----
-
 ### 8. Add changed files
 
-Add only the files that you intentionally changed.
-
 ```bash
-git add file-name
+git add YourFile.hpp YourFile.cpp
 ```
-
-Example:
-
-```bash
-git add OrderQueue.hpp OrderQueue.cpp
-```
-
-Avoid using this unless you are sure:
-
-```bash
-git add .
-```
-
-`git add .` adds all changed files, including files you may not want to commit.
-
----
 
 ### 9. Commit your changes
-
-Commit the added files with a clear message.
 
 ```bash
 git commit -m "Clear commit message"
 ```
 
-Examples:
-
-```bash
-git commit -m "Implement order queue module"
-```
-
----
-
 ### 10. Push your working branch to GitHub
-
-Push your feature branch to GitHub.
 
 ```bash
 git push -u origin feature/your-task-name
 ```
 
-Example:
-
-```bash
-git push -u origin feature/order-management
-```
-
-After the first push, you can usually use:
-
-```bash
-git push
-```
-
----
-
-### 11. Move to the browser and create a Pull Request
-
-After pushing, open the GitHub repository in your browser.
-
-Steps:
-
-```text
-GitHub repository
-↓
-Compare & pull request
-↓
-Write Pull Request title and description
-↓
-Create pull request
-```
+### 11. Create a Pull Request on GitHub
 
 Pull Request title example:
 
 ```text
-Implement order queue module
+Implement robot assignment module
 ```
 
 Pull Request description example:
 
 ```md
 ## Summary
-
-Implemented the Order Management module using a custom Queue.
+Implemented the Robot Assignment module using a custom Circular Queue.
 
 ## Changes
-
-- Added OrderQueue.hpp
-- Added OrderQueue.cpp
-- Implemented enqueue, dequeue, peek, and display functions
+- Added RobotCircularQueue.hpp
+- Added RobotCircularQueue.cpp
+- Implemented addRobot, getNextAvailableRobot, updateRobotStatus, displayRobots
 
 ## Data Structure
+- Custom Circular Queue using fixed-size array
 
-- Custom Queue using linked nodes
+## Local Test
+- Created test_robotqueue.cpp locally (not committed)
+- Confirmed rotation skips ROBOT_BUSY and ROBOT_MAINTENANCE correctly
 
 ## Checklist
-
 - [x] I worked on my own feature branch
 - [x] I did not edit main directly
 - [x] I did not change common.hpp without permission
 - [x] I did not use STL containers
 - [x] I did not define another main() function
 - [x] My code compiles
+- [x] I ran a local dummy data test
 ```
 
----
+### 12. Leader checks and approves
 
-### 12. Leader checks and approves the Pull Request
-
-The team leader checks the Pull Request.
-
-The leader checks:
+Leader checks:
 
 ```text
 - The member worked on the correct files
@@ -460,470 +554,17 @@ The leader checks:
 - The code includes common.hpp
 - The code does not contain another main() function
 - The code compiles successfully
+- The public interface matches the pre-defined .hpp
 - The data structure is implemented manually
 - The member can explain their data structure choice
 ```
 
-Members must not merge their own Pull Requests.
-
-Only the leader is allowed to approve and merge Pull Requests.
-
----
-
-### 13. Leader merges the Pull Request
-
-If there are no problems, the leader merges the Pull Request into `main`.
-
-Steps on GitHub:
-
-```text
-Pull Request page
-↓
-Check Files changed
-↓
-Check if there are conflicts
-↓
-Merge pull request
-↓
-Confirm merge
-```
-
-After merging, delete the feature branch on GitHub if it is no longer needed.
-
----
-
-### 14. After the Pull Request is merged
-
-Each member should update their local `main` branch.
+### 13. After the Pull Request is merged
 
 ```bash
 git checkout main
 git pull origin main
-```
-
-Then delete the local feature branch everytime the task is finished.
-
-```bash
 git branch -d feature/your-task-name
-```
-
-Example:
-
-```bash
-git branch -d feature/order-management
-```
-
----
-
-## Git Commands to Remember
-
-### 1. Check current branch
-
-```bash
-git branch
-```
-
-This shows all local branches.
-
-The branch with `*` is the branch you are currently using.
-
-Example:
-
-```text
-  main
-* feature/order-management
-```
-
-This means you are currently working on `feature/order-management`.
-
----
-
-### 2. Move to main branch
-
-```bash
-git checkout main
-```
-
-This moves you to the `main` branch.
-
-Use this before pulling the latest version or creating a new branch.
-
----
-
-### 3. Get the latest main from GitHub
-
-```bash
-git pull origin main
-```
-
-This updates your local `main` branch with the latest version from GitHub.
-
-Always do this before creating a new feature branch.
-
----
-
-### 4. Create a new feature branch
-
-```bash
-git checkout -b feature/branch-name
-```
-
-Example:
-
-```bash
-git checkout -b feature/order-management
-```
-
-This creates a new branch and moves you into it.
-
----
-
-### 5. Check changed files
-
-```bash
-git status
-```
-
-This shows which files have been changed, added, or deleted.
-
-Use this before every commit.
-
----
-
-### 6. Check detailed changes
-
-```bash
-git diff
-```
-
-This shows the exact changes made in the files.
-
-Use this before adding files to commit. To exit, enter 'q'.
-
----
-
-### 7. Add files to commit
-
-```bash
-git add file-name
-```
-
-Example:
-
-```bash
-git add OrderQueue.hpp OrderQueue.cpp
-```
-
-Avoid using this unless you are sure:
-
-```bash
-git add .
-```
-
-`git add .` adds all changed files, including files you may not want to commit.
-
----
-
-### 8. Commit changes
-
-```bash
-git commit -m "message"
-```
-
-Example:
-
-```bash
-git commit -m "Implement order queue module"
-```
-
-A commit saves your changes locally.
-
-
-### 9. Push branch to GitHub
-
-```bash
-git push -u origin feature/branch-name
-```
-
-Example:
-
-```bash
-git push -u origin feature/order-management
-```
-
-This sends your local branch to GitHub.
-
-After pushing, create a Pull Request on GitHub.
-
----
-
-### 10. Update your feature branch with latest main
-
-If `main` has been updated while you are working, run:
-
-```bash
-git checkout main
-git pull origin main
-git checkout feature/branch-name
-git merge main
-```
-
-Example:
-
-```bash
-git checkout main
-git pull origin main
-git checkout feature/order-management
-git merge main
-```
-
-This reduces the risk of conflicts.
-
----
-
-### 11. Delete a local branch after merge
-
-After your Pull Request is merged, move to main:
-
-```bash
-git checkout main
-git pull origin main
-```
-
-Then delete the local feature branch:
-
-```bash
-git branch -d feature/branch-name
-```
-
-Example:
-
-```bash
-git branch -d feature/order-management
-```
-
-If Git says the branch is not merged but you are sure it is no longer needed:
-
-```bash
-git branch -d feature/branch-name
-```
-
-Be careful: `-D` force deletes the branch.
-
----
-
-### 12. Delete a remote branch on GitHub
-
-```bash
-git push origin --delete feature/branch-name
-```
-
-Example:
-
-```bash
-git push origin --delete feature/order-management
-```
-
-Usually, after merging a Pull Request, GitHub also shows a `Delete branch` button.  
-Using that button is the easiest way.
-
----
-
-## Standard Workflow for Members
-
-Each member should follow this workflow:
-
-```bash
-git checkout main
-git pull origin main
-git checkout -b feature/your-task-name
-```
-
-Then work on your files.
-
-After finishing:
-
-```bash
-git status
-git add your-file.hpp your-file.cpp
-git commit -m "Clear commit message"
-git push -u origin feature/your-task-name
-```
-
-Then create a Pull Request on GitHub.
-
----
-
-## Standard Workflow for the Leader
-
-The leader reviews Pull Requests on GitHub.
-
-Before merging, check:
-
-```text
-□ The PR only changes the correct files.
-□ The code does not use banned STL containers.
-□ The code includes common.hpp.
-□ There is no extra main() function.
-□ The code compiles.
-□ The data structure is manually implemented.
-□ The member can explain the data structure choice.
-```
-
-After checking, the leader merges the Pull Request into `main`.
-
----
-
-## Things You Must Not Do
-
-### 1. Do not push directly to main
-
-Do not do this:
-
-```bash
-git checkout main
-git push origin main
-```
-
-All changes must go through Pull Requests.
-
----
-
-### 2. Do not edit other members' files without permission
-
-Each member should only edit their own files.
-
-Example:
-
-```text
-Order member:
-- OrderQueue.hpp
-- OrderQueue.cpp
-
-Robot member:
-- RobotCircularQueue.hpp
-- RobotCircularQueue.cpp
-```
-
-Do not edit another member's files without discussing it first.
-
----
-
-### 3. Do not change common.hpp without permission
-
-`common.hpp` is shared by all modules.
-
-Changing it can break everyone else's code.
-
-Only the leader should manage this file.
-
----
-
-### 4. Do not change Makefile without permission
-
-`Makefile` controls compilation.
-
-If it is changed incorrectly, the whole project may fail to compile.
-
-Only the leader should manage this file.
-
----
-
-### 5. Do not use banned STL containers
-
-Do not use:
-
-```cpp
-vector
-list
-queue
-stack
-map
-set
-```
-
-Each data structure must be implemented manually.
-
----
-
-### 6. Do not create another main() function
-
-Only `main.cpp` should contain:
-
-```cpp
-int main()
-```
-
-Module files should not contain `main()`.
-
----
-
-### 7. Do not commit executable files
-
-Do not commit files such as:
-
-```text
-warehouse
-warehouse.exe
-*.o
-*.out
-*.exe
-```
-
-These should be ignored by `.gitignore`.
-
----
-
-### 8. Do not use force push
-
-Do not use:
-
-```bash
-git push --force
-```
-
-This can overwrite other people's work.
-
----
-
-### 9. Do not make huge commits
-
-Avoid committing everything at once.
-
-Bad:
-
-```bash
-git commit -m "finish everything"
-```
-
-Good:
-
-```bash
-git commit -m "Add queue node structure"
-git commit -m "Implement enqueue function"
-git commit -m "Implement dequeue function"
-```
-
-Small commits are easier to review and fix.
-
----
-
-### 10. Do not merge your own PR without checking compilation
-
-Before merging, always compile and test the project.
-
-Example:
-
-```bash
-make
-./warehouse
-```
-
-If `make` is not available:
-
-```bash
-g++ -std=c++17 main.cpp OrderQueue.cpp RobotCircularQueue.cpp MovementStack.cpp ItemBST.cpp WarehouseTree.cpp -o dstr-task2
-./warehouse
 ```
 
 ---
@@ -949,18 +590,18 @@ If `make` is not available:
 g++ -std=c++17 main.cpp OrderQueue.cpp RobotCircularQueue.cpp MovementStack.cpp ItemBST.cpp WarehouseTree.cpp -o dstr-task2
 ```
 
-Run:
-
-```bash
-./dstr-task2
-```
-
-or on Windows:
-
-```powershell
-.\dstr-task2.exe
-```
-
 ---
 
+## Things You Must Not Do
 
+1. Do not push directly to main
+2. Do not edit other members' files without permission
+3. Do not change `common.hpp` without permission
+4. Do not change `Makefile` without permission
+5. Do not use banned STL containers
+6. Do not create another `main()` function
+7. Do not commit executable files (`*.exe`, `*.o`, `*.out`)
+8. Do not use force push (`git push --force`)
+9. Do not make huge commits — commit small logical steps
+10. Do not merge your own PR without checking compilation
+11. Do not commit local test files (`test_*.cpp`)
