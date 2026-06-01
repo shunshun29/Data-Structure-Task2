@@ -33,9 +33,6 @@ public:
     WarehouseTree();
     ~WarehouseTree();
 
-    WarehouseTree(const WarehouseTree&) = delete;
-    WarehouseTree& operator=(const WarehouseTree&) = delete;
-
     void buildLayout();
 
     void displayLayout() const;
