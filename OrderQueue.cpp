@@ -1,24 +1,19 @@
 #include "OrderQueue.hpp"
 
-OrderQueue::OrderQueue() {
-    frontPtr = nullptr;
-    rearPtr = nullptr;
-    count = 0;
-}
+// ─── Constructor & Destructor ────────────────────────────────────────────────
+
+OrderQueue::OrderQueue() : frontPtr(nullptr), rearPtr(nullptr), count(0) {}
 
 OrderQueue::~OrderQueue() {
     Node* current = frontPtr;
-
     while (current != nullptr) {
-        Node* nextNode = current->next;
+        Node* next = current->next;
         delete current;
-        current = nextNode;
+        current = next;
     }
-
-    frontPtr = nullptr;
-    rearPtr = nullptr;
-    count = 0;
 }
+
+// ─── Status Checks ────────────────────────────────────────────────────────────
 
 bool OrderQueue::isEmpty() const {
     return count == 0;
@@ -28,34 +23,31 @@ int OrderQueue::size() const {
     return count;
 }
 
+// ─── Enqueue ──────────────────────────────────────────────────────────────────
+
 void OrderQueue::enqueue(const Order& order) {
     Node* newNode = new Node;
     newNode->data = order;
     newNode->next = nullptr;
 
-    if (isEmpty()) {
+    if (rearPtr == nullptr) {
         frontPtr = newNode;
-        rearPtr = newNode;
+        rearPtr  = newNode;
     } else {
         rearPtr->next = newNode;
-        rearPtr = newNode;
+        rearPtr       = newNode;
     }
-
     count++;
-
-    cout << "Order added successfully. Order ID: " << order.orderId << endl;
 }
 
+// ─── Dequeue ──────────────────────────────────────────────────────────────────
+
 bool OrderQueue::dequeue(Order& order) {
-    if (isEmpty()) {
-        cout << "No pending orders available." << endl;
-        return false;
-    }
+    if (isEmpty()) return false;
 
-    Node* temp = frontPtr;
-    order = frontPtr->data;
-
-    frontPtr = frontPtr->next;
+    Node* temp   = frontPtr;
+    order        = frontPtr->data;
+    frontPtr     = frontPtr->next;
 
     if (frontPtr == nullptr) {
         rearPtr = nullptr;
@@ -63,38 +55,40 @@ bool OrderQueue::dequeue(Order& order) {
 
     delete temp;
     count--;
-
-    cout << "Order removed from queue. Order ID: " << order.orderId << endl;
     return true;
 }
 
-bool OrderQueue::peek(Order& order) const {
-    if (isEmpty()) {
-        return false;
-    }
+// ─── Peek ─────────────────────────────────────────────────────────────────────
 
+bool OrderQueue::peek(Order& order) const {
+    if (isEmpty()) return false;
     order = frontPtr->data;
     return true;
 }
 
+// ─── Display ─────────────────────────────────────────────────────────────────
+
 void OrderQueue::displayPendingOrders() const {
     if (isEmpty()) {
-        cout << "No pending orders." << endl;
+        cout << "[OrderQueue] No pending orders." << endl;
         return;
     }
 
-    cout << "\n--- Pending Orders ---" << endl;
+    cout << "\n===== Pending Orders (" << count << " total) =====" << endl;
+    cout << "------------------------------------------------------" << endl;
 
     Node* current = frontPtr;
-
+    int pos = 1;
     while (current != nullptr) {
-        cout << "Order ID: " << current->data.orderId
-             << " | Customer: " << current->data.customerName
-             << " | Item ID: " << current->data.itemId
-             << " | Status: " << orderStatusToText(current->data.status)
-             << " | Assigned Robot: " << current->data.assignedRobotId
+        const Order& o = current->data;
+        cout << "#" << pos++
+             << " | Order ID: "  << o.orderId
+             << " | Customer: "  << o.customerName
+             << " | Item ID: "   << o.itemId
+             << " | Status: "    << orderStatusToText(o.status)
              << endl;
-
         current = current->next;
     }
+
+    cout << "------------------------------------------------------" << endl;
 }
