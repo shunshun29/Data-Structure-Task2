@@ -17,6 +17,9 @@ private:
     Node* rearPtr;   // points to the back of the queue
     int count;       // keeps track of how many orders are in the queue
 
+    Order completedOrders[MAX_COMPLETED_ORDERS];
+    int   completedCount;
+
 public:
     OrderQueue();
     ~OrderQueue();
@@ -24,12 +27,19 @@ public:
     bool isEmpty() const;
     int size() const;
 
-    void enqueue(const Order& order);   // add a new order to the back
-    bool dequeue(Order& order);         // remove and return the front order
-    bool peek(Order& order) const;      // look at the front order without removing it
+    void enqueue(const Order& order);
+    bool dequeue(Order& order);
+    bool peek(Order& order) const;
+
+    bool updateOrderAssignment(int orderId, int robotId);  // set assignedRobotId + ORDER_ASSIGNED
+
+    bool peekFirstPending(Order& order) const;  // return the first PENDING order without removing it
 
     void displayPendingOrders() const;
-    bool containsOrderId(int orderId) const;  // check if an order ID already exists
+    bool containsOrderId(int orderId) const;    // checks both active queue and completed history
+
+    void addToCompleted(const Order& order);
+    void displayCompletedOrders() const;
 };
 
 #endif

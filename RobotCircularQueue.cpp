@@ -27,6 +27,13 @@ int RobotCircularQueue::size() const {
 
 // add a robot to the next free slot in the array
 bool RobotCircularQueue::addRobot(const Robot& robot) {
+    for (int i = 0; i < count; i++) {
+        if (robots[i].robotId == robot.robotId) {
+            cout << "[RobotCircularQueue] Robot ID " << robot.robotId
+                 << " is already registered." << endl;
+            return false;
+        }
+    }
     if (isFull()) {
         cout << "[RobotCircularQueue] Cannot add robot — queue is full (capacity: "
              << capacity << ")." << endl;
@@ -41,7 +48,7 @@ bool RobotCircularQueue::addRobot(const Robot& robot) {
 // wraps around to the beginning using the modulo trick
 // once a robot is found, mark it busy and advance the cursor so
 // the next search starts from a different robot (fair rotation)
-bool RobotCircularQueue::getNextAvailableRobot(Robot& robot) {
+bool RobotCircularQueue::getNextAvailableRobot(Robot& robot, int orderId) {
     if (isEmpty()) {
         cout << "[RobotCircularQueue] No robots registered." << endl;
         return false;
@@ -49,10 +56,11 @@ bool RobotCircularQueue::getNextAvailableRobot(Robot& robot) {
 
     // try each slot at most count times before giving up
     for (int attempts = 0; attempts < count; attempts++) {
-        int index = (cursor + attempts) % count;  // wrap around if we reach the end
+        int index = (cursor + attempts) % count;
 
         if (robots[index].status == ROBOT_AVAILABLE) {
-            robots[index].status = ROBOT_BUSY;
+            robots[index].status          = ROBOT_BUSY;
+            robots[index].assignedOrderId = orderId;
 
             // move cursor past this robot so next call starts from a different one
             cursor = (index + 1) % count;
@@ -64,6 +72,17 @@ bool RobotCircularQueue::getNextAvailableRobot(Robot& robot) {
 
     // all robots are busy or under maintenance
     cout << "[RobotCircularQueue] No available robot found." << endl;
+    return false;
+}
+
+// return a copy of the robot matching the given ID
+bool RobotCircularQueue::getRobotById(int robotId, Robot& robot) const {
+    for (int i = 0; i < count; i++) {
+        if (robots[i].robotId == robotId) {
+            robot = robots[i];
+            return true;
+        }
+    }
     return false;
 }
 

@@ -16,8 +16,9 @@ public:
     int size() const;
 
     bool addRobot(const Robot& robot);
-    bool getNextAvailableRobot(Robot& robot);             // find next available robot using rotation
+    bool getNextAvailableRobot(Robot& robot, int orderId);   // find next available robot and bind it to orderId
     bool updateRobotStatus(int robotId, RobotStatus status);
+    bool getRobotById(int robotId, Robot& robot) const;      // look up a robot's current data by ID
     void displayRobots() const;
 
 private:
