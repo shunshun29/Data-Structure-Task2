@@ -35,6 +35,7 @@ public:
     bool searchByName(const char name[], Item& result) const;
     void displayInOrder() const;
     bool remove(const char itemId[]);
+    bool decrementQuantity(const char itemId[]);  // subtract 1 from stock; returns false if not found or already 0
 };
 
 #endif

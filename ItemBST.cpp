@@ -37,6 +37,7 @@ ItemBST::Node* ItemBST::insertHelper(Node* node, const Item& item) {
         cout << "[ItemBST] Item ID " << item.itemId << " already exists. Updating record." << endl;
         copyText(node->data.itemName, item.itemName, MAX_NAME_LENGTH);
         copyText(node->data.location, item.location, MAX_LOCATION_LENGTH);
+        node->data.quantity = item.quantity;
     }
 
     return node;
@@ -105,6 +106,7 @@ void ItemBST::inOrderHelper(Node* node) const {
     cout << "ID       : " << node->data.itemId   << endl;
     cout << "Name     : " << node->data.itemName  << endl;
     cout << "Location : " << node->data.location  << endl;
+    cout << "Quantity : " << node->data.quantity   << endl;
     cout << "-------------------------------------------" << endl;
     inOrderHelper(node->right);
 }
@@ -154,4 +156,13 @@ ItemBST::Node* ItemBST::findMin(Node* node) const {
         node = node->left;
     }
     return node;
+}
+
+// subtract 1 from the item's quantity; fails if item not found or already 0
+bool ItemBST::decrementQuantity(const char itemId[]) {
+    Node* found = searchHelper(root, itemId);
+    if (found == nullptr) return false;
+    if (found->data.quantity <= 0) return false;
+    found->data.quantity--;
+    return true;
 }

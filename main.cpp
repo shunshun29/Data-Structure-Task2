@@ -13,7 +13,7 @@ static bool isEmptyInput(const char str[]) {
 void showMainMenu() {
     cout << "\n========== Warehouse Robot Navigation System ==========" << endl;
     cout << "1.  Add New Order" << endl;
-    cout << "2.  Display Pending Orders" << endl;
+    cout << "2.  Display Active Orders" << endl;
     cout << "3.  Process Next Order" << endl;
     cout << "4.  Display Robots" << endl;
     cout << "5.  Assign Robot to Order" << endl;
@@ -23,6 +23,8 @@ void showMainMenu() {
     cout << "9.  Generate Route" << endl;
     cout << "10. Record Robot Movement" << endl;
     cout << "11. Return Robot Using Reverse Path" << endl;
+    cout << "12. View Completed Orders" << endl;
+    cout << "13. Set Robot Maintenance Status" << endl;
     cout << "0.  Exit" << endl;
     cout << "=======================================================" << endl;
     cout << "Enter your choice: ";
@@ -31,7 +33,7 @@ void showMainMenu() {
 int main() {
     OrderQueue         orderQueue;
     RobotCircularQueue robotQueue(MAX_ROBOTS);
-    MovementStack      movementStack;
+    MovementStack      movementStack[MAX_ROBOTS];  // one stack per robot slot
     ItemBST            itemBST;
     WarehouseTree      warehouseTree;
 
@@ -59,11 +61,13 @@ int main() {
         const char ids  [N][MAX_ID_LENGTH]      = {"ITEM001","ITEM002","ITEM003","ITEM004","ITEM005"};
         const char names[N][MAX_NAME_LENGTH]     = {"Widget A","Gadget B","Component C","Module D","Part E"};
         const char locs [N][MAX_LOCATION_LENGTH] = {"ShelfA1-1","ShelfA2-1","ShelfB1-2","ShelfB2-3","ShelfC1-1"};
+        const int  qtys [N]                      = {10, 8, 5, 12, 7};
         for (int i = 0; i < N; i++) {
             Item item;
             copyText(item.itemId,   ids[i],   MAX_ID_LENGTH);
             copyText(item.itemName, names[i],  MAX_NAME_LENGTH);
             copyText(item.location, locs[i],   MAX_LOCATION_LENGTH);
+            item.quantity = qtys[i];
             itemBST.insert(item);
         }
     }
@@ -79,7 +83,7 @@ int main() {
         if (!(cin >> choice)) {
             cin.clear();
             cin.ignore(1000, '\n');
-            cout << "[Error] Invalid input. Please enter a number (0-11)." << endl;
+            cout << "[Error] Invalid input. Please enter a number (0-13)." << endl;
             continue;
         }
         cin.ignore(1000, '\n');
@@ -139,11 +143,20 @@ int main() {
                     break;
                 }
 
+                if (dummy.quantity <= 0) {
+                    cout << "[Error] Item '" << order.itemId
+                         << "' is out of stock." << endl;
+                    break;
+                }
+
                 order.status          = ORDER_PENDING;
                 order.assignedRobotId = -1;
                 orderQueue.enqueue(order);
+                itemBST.decrementQuantity(order.itemId);
                 cout << "Order #" << order.orderId
                      << " added to queue successfully." << endl;
+                cout << "  Remaining stock for '" << order.itemId
+                     << "': " << (dummy.quantity - 1) << endl;
                 break;
             }
 
@@ -152,20 +165,42 @@ int main() {
                 orderQueue.displayPendingOrders();
                 break;
 
-            // remove and show the next order from the front of the queue
+            // remove and complete the front order (robot must already be assigned)
             case 3: {
-                Order processed;
-                if (orderQueue.dequeue(processed)) {
-                    cout << "\n--- Order Processed ---" << endl;
-                    cout << "  Order ID   : " << processed.orderId       << endl;
-                    cout << "  Customer   : " << processed.customerName  << endl;
-                    cout << "  Item ID    : " << processed.itemId        << endl;
-                    cout << "  Status     : " << orderStatusToText(processed.status) << endl;
-                    cout << "Order #" << processed.orderId
-                         << " removed from queue." << endl;
-                } else {
-                    cout << "No pending orders to process." << endl;
+                if (orderQueue.isEmpty()) {
+                    cout << "No active orders to process." << endl;
+                    break;
                 }
+
+                Order front;
+                orderQueue.peek(front);
+
+                if (front.assignedRobotId == -1) {
+                    cout << "[Error] Order #" << front.orderId
+                         << " has no robot assigned yet." << endl;
+                    cout << "        Use Menu 5 to assign a robot first." << endl;
+                    break;
+                }
+
+                Order processed;
+                orderQueue.dequeue(processed);
+                processed.status = ORDER_COMPLETED;
+
+                // free the robot so it can take the next order
+                robotQueue.updateRobotStatus(processed.assignedRobotId, ROBOT_AVAILABLE);
+
+                // archive to completed history
+                orderQueue.addToCompleted(processed);
+
+                cout << "\n--- Order Processed ---" << endl;
+                cout << "  Order ID   : " << processed.orderId                   << endl;
+                cout << "  Customer   : " << processed.customerName              << endl;
+                cout << "  Item ID    : " << processed.itemId                    << endl;
+                cout << "  Robot      : R-" << processed.assignedRobotId         << endl;
+                cout << "  Status     : " << orderStatusToText(processed.status) << endl;
+                cout << "Order #" << processed.orderId
+                     << " completed. Robot R-" << processed.assignedRobotId
+                     << " is now Available." << endl;
                 break;
             }
 
@@ -174,31 +209,36 @@ int main() {
                 robotQueue.displayRobots();
                 break;
 
-            // assign the next available robot to the front order in the queue
+            // assign the next available robot to the first PENDING order in the queue
             case 5: {
                 cout << "\n--- Assign Robot to Order ---" << endl;
 
                 if (orderQueue.isEmpty()) {
-                    cout << "[Error] No pending orders in queue." << endl;
+                    cout << "[Error] No active orders in queue." << endl;
                     break;
                 }
 
-                // peek at the next order so we know what we are assigning to
+                // find the first order that has not yet been assigned a robot
                 Order nextOrder;
-                orderQueue.peek(nextOrder);
-                cout << "Next pending order : #" << nextOrder.orderId
+                if (!orderQueue.peekFirstPending(nextOrder)) {
+                    cout << "[Error] All active orders already have robots assigned." << endl;
+                    cout << "        Use Menu 3 to process an order first." << endl;
+                    break;
+                }
+
+                cout << "Next unassigned order : #" << nextOrder.orderId
                      << "  (Customer: " << nextOrder.customerName
                      << ", Item: "      << nextOrder.itemId << ")" << endl;
 
                 Robot assigned;
-                if (robotQueue.getNextAvailableRobot(assigned)) {
+                if (robotQueue.getNextAvailableRobot(assigned, nextOrder.orderId)) {
+                    orderQueue.updateOrderAssignment(nextOrder.orderId, assigned.robotId);
+
                     cout << "Robot R-" << assigned.robotId
-                         << " assigned to Order #" << nextOrder.orderId
-                         << "." << endl;
-                    cout << "Robot R-" << assigned.robotId
-                         << " status is now: Busy" << endl;
-                    cout << "(Use Menu 3 to dequeue the order when complete." << endl;
-                    cout << " Use Menu 4 to mark the robot Available again.)" << endl;
+                         << " assigned to Order #" << nextOrder.orderId << "." << endl;
+                    cout << "Robot R-"  << assigned.robotId << " status: Busy"      << endl;
+                    cout << "Order #"   << nextOrder.orderId << " status: Assigned"  << endl;
+                    cout << "(Use Menu 3 to process the order when complete.)"       << endl;
                 }
                 break;
             }
@@ -240,9 +280,23 @@ int main() {
                     break;
                 }
 
+                // quantity must be a positive integer
+                cout << "Enter Quantity   : ";
+                if (!(cin >> item.quantity)) {
+                    cin.clear();
+                    cin.ignore(1000, '\n');
+                    cout << "[Error] Quantity must be an integer." << endl;
+                    break;
+                }
+                cin.ignore(1000, '\n');
+                if (item.quantity <= 0) {
+                    cout << "[Error] Quantity must be greater than 0." << endl;
+                    break;
+                }
+
                 itemBST.insert(item);
                 cout << "Item '" << item.itemName
-                     << "' added to inventory." << endl;
+                     << "' added to inventory (qty: " << item.quantity << ")." << endl;
                 break;
             }
 
@@ -286,6 +340,7 @@ int main() {
                         cout << "  ID       : " << result.itemId   << endl;
                         cout << "  Name     : " << result.itemName << endl;
                         cout << "  Location : " << result.location << endl;
+                        cout << "  Quantity : " << result.quantity  << endl;
                     } else {
                         cout << "Item with ID '" << itemId << "' not found." << endl;
                     }
@@ -305,6 +360,7 @@ int main() {
                         cout << "  ID       : " << result.itemId   << endl;
                         cout << "  Name     : " << result.itemName << endl;
                         cout << "  Location : " << result.location << endl;
+                        cout << "  Quantity : " << result.quantity  << endl;
                     } else {
                         cout << "Item '" << itemName << "' not found." << endl;
                     }
@@ -353,20 +409,34 @@ int main() {
                 break;
             }
 
-            // record one movement step for a robot
+            // record one movement step for a specific robot
             case 10: {
-                char step[MAX_LOCATION_LENGTH];
                 cout << "\n--- Record Robot Movement ---" << endl;
+
+                int robotId;
+                cout << "Enter Robot ID (1-" << robotQueue.size() << "): ";
+                if (!(cin >> robotId)) {
+                    cin.clear();
+                    cin.ignore(1000, '\n');
+                    cout << "[Error] Robot ID must be an integer." << endl;
+                    break;
+                }
+                cin.ignore(1000, '\n');
+                if (robotId < 1 || robotId > robotQueue.size()) {
+                    cout << "[Error] Invalid Robot ID. Enter a number between 1 and "
+                         << robotQueue.size() << "." << endl;
+                    break;
+                }
+
+                char step[MAX_LOCATION_LENGTH];
                 cout << "Enter step (e.g. ZoneA, AisleB1, ShelfA1-1): ";
                 cin.getline(step, MAX_LOCATION_LENGTH);
 
-                // step name cannot be blank
                 if (isEmptyInput(step)) {
                     cout << "[Error] Step cannot be empty." << endl;
                     break;
                 }
 
-                // step must be a real location in the warehouse
                 if (!warehouseTree.locationExists(step)) {
                     cout << "[Error] '" << step
                          << "' is not a valid warehouse location." << endl;
@@ -374,22 +444,108 @@ int main() {
                     break;
                 }
 
-                movementStack.push(step);
-                movementStack.displayPath();
+                cout << "Robot R-" << robotId << " path:" << endl;
+                movementStack[robotId - 1].push(step);
+                movementStack[robotId - 1].displayPath();
                 break;
             }
 
-            // retrace the robot's path by popping all steps in reverse
-            case 11:
-                movementStack.returnPath();
+            // retrace a specific robot's path by popping all steps in reverse
+            case 11: {
+                cout << "\n--- Return Robot Using Reverse Path ---" << endl;
+
+                int robotId;
+                cout << "Enter Robot ID (1-" << robotQueue.size() << "): ";
+                if (!(cin >> robotId)) {
+                    cin.clear();
+                    cin.ignore(1000, '\n');
+                    cout << "[Error] Robot ID must be an integer." << endl;
+                    break;
+                }
+                cin.ignore(1000, '\n');
+                if (robotId < 1 || robotId > robotQueue.size()) {
+                    cout << "[Error] Invalid Robot ID. Enter a number between 1 and "
+                         << robotQueue.size() << "." << endl;
+                    break;
+                }
+
+                cout << "Robot R-" << robotId << " returning:" << endl;
+                movementStack[robotId - 1].returnPath();
+                movementStack[robotId - 1].clearPath();
                 break;
+            }
+
+            // display the history of all completed orders
+            case 12:
+                orderQueue.displayCompletedOrders();
+                break;
+
+            // toggle a robot between Available and Maintenance
+            case 13: {
+                cout << "\n--- Set Robot Maintenance Status ---" << endl;
+
+                int robotId;
+                cout << "Enter Robot ID (1-" << robotQueue.size() << "): ";
+                if (!(cin >> robotId)) {
+                    cin.clear();
+                    cin.ignore(1000, '\n');
+                    cout << "[Error] Robot ID must be an integer." << endl;
+                    break;
+                }
+                cin.ignore(1000, '\n');
+                if (robotId < 1 || robotId > robotQueue.size()) {
+                    cout << "[Error] Invalid Robot ID. Enter a number between 1 and "
+                         << robotQueue.size() << "." << endl;
+                    break;
+                }
+
+                Robot target;
+                if (!robotQueue.getRobotById(robotId, target)) {
+                    cout << "[Error] Robot R-" << robotId << " not found." << endl;
+                    break;
+                }
+
+                if (target.status == ROBOT_BUSY) {
+                    cout << "[Error] Robot R-" << robotId
+                         << " is currently Busy (assigned to Order #"
+                         << target.assignedOrderId
+                         << "). Cannot change status while processing an order." << endl;
+                    break;
+                }
+
+                cout << "Current status : " << robotStatusToText(target.status) << endl;
+                cout << "New status     :" << endl;
+                cout << "  1) Set to Maintenance" << endl;
+                cout << "  2) Set to Available" << endl;
+                cout << "Enter choice: ";
+
+                int statusChoice;
+                if (!(cin >> statusChoice)) {
+                    cin.clear();
+                    cin.ignore(1000, '\n');
+                    cout << "[Error] Invalid input." << endl;
+                    break;
+                }
+                cin.ignore(1000, '\n');
+
+                if (statusChoice == 1) {
+                    robotQueue.updateRobotStatus(robotId, ROBOT_MAINTENANCE);
+                    cout << "Robot R-" << robotId << " is now set to Maintenance." << endl;
+                } else if (statusChoice == 2) {
+                    robotQueue.updateRobotStatus(robotId, ROBOT_AVAILABLE);
+                    cout << "Robot R-" << robotId << " is now Available." << endl;
+                } else {
+                    cout << "[Error] Invalid choice. Enter 1 or 2." << endl;
+                }
+                break;
+            }
 
             case 0:
                 cout << "Exiting system. Goodbye!" << endl;
                 break;
 
             default:
-                cout << "[Error] Invalid choice. Please enter a number between 0 and 11." << endl;
+                cout << "[Error] Invalid choice. Please enter a number between 0 and 13." << endl;
         }
 
     } while (choice != 0);

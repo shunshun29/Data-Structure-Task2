@@ -12,8 +12,9 @@ using namespace std;
 const int MAX_ID_LENGTH       = 20;
 const int MAX_NAME_LENGTH     = 50;
 const int MAX_LOCATION_LENGTH = 100;
-const int MAX_ROUTE_STEPS     = 100;
-const int MAX_ROBOTS          = 10;
+const int MAX_ROUTE_STEPS         = 100;
+const int MAX_ROBOTS              = 10;
+const int MAX_COMPLETED_ORDERS    = 100;
 
 // possible states for an order
 enum OrderStatus {
@@ -50,6 +51,7 @@ struct Item {
     char itemId[MAX_ID_LENGTH];
     char itemName[MAX_NAME_LENGTH];
     char location[MAX_LOCATION_LENGTH];
+    int  quantity;
 };
 
 // stores a generated route as an array of location names

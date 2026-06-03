@@ -222,10 +222,11 @@ bool WarehouseTree::generateRoute(const char from[], const char to[], Route& rou
         return false;
     }
 
-    // same location, nothing to route
+    // same location — trivial single-step route
     if (strcmp(from, to) == 0) {
         copyText(route.steps[0], from, MAX_LOCATION_LENGTH);
         route.stepCount = 1;
+        cout << "Route generated successfully!\n";
         return true;
     }
 

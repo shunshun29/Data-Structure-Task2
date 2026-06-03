@@ -36,7 +36,7 @@ bool MovementStack::push(const char step[])
     strncpy(steps[top], step, STEP_SIZE - 1);
     steps[top][STEP_SIZE - 1] = '\0';
 
-    cout << "[MovemenStack] Step recorded: \"" << steps[top] << "\"" << endl;
+    cout << "[MovementStack] Step recorded: \"" << steps[top] << "\"" << endl;
     return true;
 }
 

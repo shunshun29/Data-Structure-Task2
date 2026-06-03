@@ -3,8 +3,8 @@
 
 #include "common.hpp"
 
-const int MAX_STEPS = 100;  // max number of steps the stack can hold
-const int STEP_SIZE = 50;   // max characters per step name
+const int MAX_STEPS = 100;                   // max number of steps the stack can hold
+const int STEP_SIZE = MAX_LOCATION_LENGTH;   // must match warehouse location name limit
 
 // custom stack for recording robot movement steps
 // uses a fixed-size array, top starts at -1 (empty)
