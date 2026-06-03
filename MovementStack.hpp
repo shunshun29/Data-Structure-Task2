@@ -3,48 +3,32 @@
 
 #include "common.hpp"
 
-const int MAX_STEPS = 100;
+const int MAX_STEPS = 100;  // max number of steps the stack can hold
+const int STEP_SIZE = 50;   // max characters per step name
 
-const int STEP_SIZE = 50;
-
+// custom stack for recording robot movement steps
+// uses a fixed-size array, top starts at -1 (empty)
 class MovementStack {
 
     private:
-        //internal fixed-size array to store movement steps
-        char steps[MAX_STEPS][STEP_SIZE];
-
-        //index of the top element 
-        int top;
+        char steps[MAX_STEPS][STEP_SIZE];  // stores each movement step
+        int top;                            // index of the topmost step
 
     public:
 
         MovementStack();
-
         ~MovementStack();
 
-        //returns true if stack has no steps recorded
         bool isEmpty() const;
-
-        //returns num of steps in current stack
         int size() const;
 
-        //push a new movement step onto top of the stack
-        //returns false if stack full
-        bool push(const char step[]);
+        bool push(const char step[]);  // add a step to the top, returns false if full
+        bool pop(char step[]);         // remove the top step, returns false if empty
+        bool peek(char step[]) const;  // view the top step without removing it
 
-        //removes the top step and copies it into the provided buffer
-        //returns false if stack empty
-        bool pop(char step[]);
-
-        //copies top step into provided buffer without removing it
-        //returns false if stack empty
-        bool peek(char step[]) const;
-
-        void displayPath() const;
-
-        void returnPath();
-
-        void clearPath();
+        void displayPath() const;  // print all steps from first to last
+        void returnPath();         // pop and print steps in reverse to trace back
+        void clearPath();          // reset the stack
 };
 
 #endif

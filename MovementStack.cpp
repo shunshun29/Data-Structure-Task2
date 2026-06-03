@@ -4,6 +4,7 @@
 
 using namespace std;
 
+// top = -1 means the stack is empty
 MovementStack::MovementStack()
 {
     top = -1;
@@ -21,9 +22,9 @@ int MovementStack::size() const
     return top + 1;
 }
 
+// add a step to the top of the stack
 bool MovementStack::push(const char step[])
 {
-    //check if stack full
     if (top >= MAX_STEPS - 1)
     {
         cout << "[MovementStack] Error: Stack is full. Cannot record step \""
@@ -31,7 +32,6 @@ bool MovementStack::push(const char step[])
         return false;
     }
 
-    //move top pointer up and copy the step string
     top++;
     strncpy(steps[top], step, STEP_SIZE - 1);
     steps[top][STEP_SIZE - 1] = '\0';
@@ -40,6 +40,7 @@ bool MovementStack::push(const char step[])
     return true;
 }
 
+// remove the top step and copy it into the output buffer
 bool MovementStack::pop(char step[])
 {
     if (isEmpty())
@@ -48,14 +49,14 @@ bool MovementStack::pop(char step[])
         return false;
     }
 
-    //copy top step into the output buffer, then decrement top
-    strncpy(step, steps[top], STEP_SIZE -1);
+    strncpy(step, steps[top], STEP_SIZE - 1);
     step[STEP_SIZE - 1] = '\0';
     top--;
 
     return true;
 }
 
+// copy the top step to the buffer without removing it
 bool MovementStack::peek(char step[]) const
 {
     if (isEmpty())
@@ -64,14 +65,14 @@ bool MovementStack::peek(char step[]) const
         return false;
     }
 
-    //copy top step into output buffer
-    strncpy(step, steps[top], STEP_SIZE -1);
-    step[STEP_SIZE -1] = '\0';
+    strncpy(step, steps[top], STEP_SIZE - 1);
+    step[STEP_SIZE - 1] = '\0';
 
     return true;
 }
 
-void MovementStack::displayPath() const 
+// print from bottom to top so it shows the path in the order it was travelled
+void MovementStack::displayPath() const
 {
     cout << "\n---Movement Path---" << endl;
 
@@ -82,7 +83,6 @@ void MovementStack::displayPath() const
         return;
     }
 
-    //print from bottom to top for chronological order
     for (int i = 0; i <= top; i++)
     {
         cout << "  Step " << (i + 1) << ": " << steps[i] << endl;
@@ -92,6 +92,7 @@ void MovementStack::displayPath() const
     cout << "Total steps: " << size() << endl;
 }
 
+// pop each step one by one to print the return path in reverse
 void MovementStack::returnPath()
 {
     cout << "\n---Returning---" << endl;
@@ -103,7 +104,6 @@ void MovementStack::returnPath()
         return;
     }
 
-    //pop each step and display it as the return route
     char currentStep[STEP_SIZE];
     int stepNumber = 1;
 
@@ -118,6 +118,7 @@ void MovementStack::returnPath()
      cout << "Robot has returned to starting point." << endl;
 }
 
+// reset by moving top back to -1, no need to clear the array
 void MovementStack::clearPath()
 {
     top = -1;

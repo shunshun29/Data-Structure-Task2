@@ -1,14 +1,12 @@
 #include "ItemBST.hpp"
 
-// ─── Constructor & Destructor ────────────────────────────────────────────────
-
 ItemBST::ItemBST() : root(nullptr) {}
 
 ItemBST::~ItemBST() {
     destroyTree(root);
 }
 
-// Recursively delete all nodes to free memory
+// delete all nodes to free memory
 void ItemBST::destroyTree(Node* node) {
     if (node == nullptr) return;
     destroyTree(node->left);
@@ -16,16 +14,14 @@ void ItemBST::destroyTree(Node* node) {
     delete node;
 }
 
-// ─── Insert ──────────────────────────────────────────────────────────────────
-
-// Public insert: starts the recursive insertion from root
+// kick off the recursive insert from the root
 void ItemBST::insert(const Item& item) {
     root = insertHelper(root, item);
 }
 
-// Private helper: places the new item in the correct BST position by itemId
+// smaller IDs go left, larger go right
+// if the same ID already exists, update it instead of inserting a duplicate
 ItemBST::Node* ItemBST::insertHelper(Node* node, const Item& item) {
-    // Base case: empty spot found, create new node here
     if (node == nullptr) {
         return new Node(item);
     }
@@ -33,13 +29,11 @@ ItemBST::Node* ItemBST::insertHelper(Node* node, const Item& item) {
     int cmp = strcmp(item.itemId, node->data.itemId);
 
     if (cmp < 0) {
-        // New item ID is smaller → go left
         node->left = insertHelper(node->left, item);
     } else if (cmp > 0) {
-        // New item ID is larger → go right
         node->right = insertHelper(node->right, item);
     } else {
-        // Duplicate ID: update existing record
+        // duplicate ID, update the existing entry
         cout << "[ItemBST] Item ID " << item.itemId << " already exists. Updating record." << endl;
         copyText(node->data.itemName, item.itemName, MAX_NAME_LENGTH);
         copyText(node->data.location, item.location, MAX_LOCATION_LENGTH);
@@ -48,9 +42,7 @@ ItemBST::Node* ItemBST::insertHelper(Node* node, const Item& item) {
     return node;
 }
 
-// ─── Search by ID ─────────────────────────────────────────────────────────────
-
-// Public search: returns true and fills result if found
+// start the search from the root
 bool ItemBST::search(const char itemId[], Item& result) const {
     Node* found = searchHelper(root, itemId);
     if (found != nullptr) {
@@ -60,37 +52,31 @@ bool ItemBST::search(const char itemId[], Item& result) const {
     return false;
 }
 
-// Private helper: BST search — O(log n) average
+// walk left or right based on string comparison until found or not found
 ItemBST::Node* ItemBST::searchHelper(Node* node, const char itemId[]) const {
-    // Base case: not found or exact match
     if (node == nullptr) return nullptr;
     if (strcmp(itemId, node->data.itemId) == 0) return node;
 
     if (strcmp(itemId, node->data.itemId) < 0) {
-        // Target is smaller → search left subtree
         return searchHelper(node->left, itemId);
     } else {
-        // Target is larger → search right subtree
         return searchHelper(node->right, itemId);
     }
 }
 
-// ─── Search by Name ───────────────────────────────────────────────────────────
-
-// Public searchByName: traverses entire tree since names are not sorted
+// names are not sorted so we have to check every node
 bool ItemBST::searchByName(const char name[], Item& result) const {
     bool found = false;
     searchByNameHelper(root, name, result, found);
     return found;
 }
 
-// Private helper: full in-order traversal to find by name
+// traverse the whole tree and compare each name
 void ItemBST::searchByNameHelper(Node* node, const char name[], Item& result, bool& found) const {
     if (node == nullptr || found) return;
 
     searchByNameHelper(node->left, name, result, found);
 
-    // Case-sensitive name comparison
     if (strcmp(name, node->data.itemName) == 0) {
         result = node->data;
         found = true;
@@ -100,9 +86,7 @@ void ItemBST::searchByNameHelper(Node* node, const char name[], Item& result, bo
     searchByNameHelper(node->right, name, result, found);
 }
 
-// ─── Display (In-Order) ───────────────────────────────────────────────────────
-
-// Public display: prints all items sorted by itemId (in-order = sorted for BST)
+// in-order traversal prints items sorted by ID because of how the BST is built
 void ItemBST::displayInOrder() const {
     if (root == nullptr) {
         cout << "[ItemBST] No items in the system." << endl;
@@ -114,7 +98,7 @@ void ItemBST::displayInOrder() const {
     cout << "-------------------------------------------" << endl;
 }
 
-// Private helper: left → root → right traversal
+// left subtree first, then current node, then right subtree
 void ItemBST::inOrderHelper(Node* node) const {
     if (node == nullptr) return;
     inOrderHelper(node->left);
@@ -125,18 +109,15 @@ void ItemBST::inOrderHelper(Node* node) const {
     inOrderHelper(node->right);
 }
 
-// ─── Remove ───────────────────────────────────────────────────────────────────
-
-// Public remove: returns true if item was found and deleted
 bool ItemBST::remove(const char itemId[]) {
     bool removed = false;
     root = removeHelper(root, itemId, removed);
     return removed;
 }
 
-// Private helper: handles 3 BST deletion cases
+// three cases: no left child, no right child, or two children
 ItemBST::Node* ItemBST::removeHelper(Node* node, const char itemId[], bool& removed) {
-    if (node == nullptr) return nullptr;  // Item not found
+    if (node == nullptr) return nullptr;
 
     int cmp = strcmp(itemId, node->data.itemId);
 
@@ -145,21 +126,20 @@ ItemBST::Node* ItemBST::removeHelper(Node* node, const char itemId[], bool& remo
     } else if (cmp > 0) {
         node->right = removeHelper(node->right, itemId, removed);
     } else {
-        // Found the node to delete
         removed = true;
 
         if (node->left == nullptr) {
-            // Case 1: No left child → replace with right child
+            // no left child, just connect the right child up
             Node* temp = node->right;
             delete node;
             return temp;
         } else if (node->right == nullptr) {
-            // Case 2: No right child → replace with left child
+            // no right child, just connect the left child up
             Node* temp = node->left;
             delete node;
             return temp;
         } else {
-            // Case 3: Two children → replace with in-order successor (smallest in right subtree)
+            // two children: replace this node with the in-order successor
             Node* successor = findMin(node->right);
             node->data = successor->data;
             node->right = removeHelper(node->right, successor->data.itemId, removed);
@@ -168,7 +148,7 @@ ItemBST::Node* ItemBST::removeHelper(Node* node, const char itemId[], bool& remo
     return node;
 }
 
-// Find leftmost (smallest) node in a subtree
+// keep going left until there is no more left child
 ItemBST::Node* ItemBST::findMin(Node* node) const {
     while (node->left != nullptr) {
         node = node->left;
