@@ -5,7 +5,7 @@
 
 using namespace std;
 
-// creates a new tree node
+// allocate and set up a new tree node
 WarehouseTree::TreeNode* WarehouseTree::createNode(const char name[], TreeNode* parent)
 {
     TreeNode* node = new TreeNode;
@@ -13,7 +13,6 @@ WarehouseTree::TreeNode* WarehouseTree::createNode(const char name[], TreeNode* 
     copyText(node->name, name, MAX_LOCATION_LENGTH);
 
     node->childCount = 0;
-
     node->parent = parent;
 
     for (int i = 0; i < MAX_CHILDREN; i++) {
@@ -23,7 +22,7 @@ WarehouseTree::TreeNode* WarehouseTree::createNode(const char name[], TreeNode* 
     return node;
 }
 
-// adds a child location under parent location
+// create a new node and attach it under the given parent
 WarehouseTree::TreeNode* WarehouseTree::addChild(TreeNode* parentNode, const char name[])
 {
     if (parentNode == nullptr) {
@@ -39,13 +38,12 @@ WarehouseTree::TreeNode* WarehouseTree::addChild(TreeNode* parentNode, const cha
     TreeNode* child = createNode(name, parentNode);
 
     parentNode->children[parentNode->childCount] = child;
-
     parentNode->childCount++;
 
     return child;
 }
 
-// prints the warehouse layout in tree form
+// print the tree with indentation to show the hierarchy
 void WarehouseTree::printTree(TreeNode* node, int depth) const
 {
     if (node == nullptr) {
@@ -55,7 +53,7 @@ void WarehouseTree::printTree(TreeNode* node, int depth) const
     for (int i = 0; i < depth; i++) {
         cout << "   ";
     }
- 
+
     if (depth > 0) {
         cout << "|-- ";
     }
@@ -67,7 +65,7 @@ void WarehouseTree::printTree(TreeNode* node, int depth) const
     }
 }
 
-// searches for a location by name
+// depth-first search to find a node by name
 WarehouseTree::TreeNode* WarehouseTree::findNode(TreeNode* node, const char name[]) const
 {
     if (node == nullptr) {
@@ -78,7 +76,6 @@ WarehouseTree::TreeNode* WarehouseTree::findNode(TreeNode* node, const char name
         return node;
     }
 
-    // depth-first search
     for (int i = 0; i < node->childCount; i++) {
         TreeNode* found = findNode(node->children[i], name);
 
@@ -90,7 +87,8 @@ WarehouseTree::TreeNode* WarehouseTree::findNode(TreeNode* node, const char name
     return nullptr;
 }
 
-// builds a path from the root to selected node
+// walk from a node up to the root collecting names, then reverse the array
+// so the result goes from root down to the node
 int WarehouseTree::buildPathToNode(TreeNode* node, char path[][MAX_LOCATION_LENGTH]) const
 {
     if (node == nullptr) {
@@ -102,12 +100,14 @@ int WarehouseTree::buildPathToNode(TreeNode* node, char path[][MAX_LOCATION_LENG
 
     char tempPath[MAX_ROUTE_STEPS][MAX_LOCATION_LENGTH];
 
+    // collect names going up toward the root
     while (current != nullptr && count < MAX_ROUTE_STEPS) {
         copyText(tempPath[count], current->name, MAX_LOCATION_LENGTH);
         count++;
         current = current->parent;
     }
 
+    // reverse so the path goes top-down
     for (int i = 0; i < count; i++) {
         copyText(path[i], tempPath[count - 1 - i], MAX_LOCATION_LENGTH);
     }
@@ -115,7 +115,7 @@ int WarehouseTree::buildPathToNode(TreeNode* node, char path[][MAX_LOCATION_LENG
     return count;
 }
 
-// deletes the whole tree
+// recursively delete all nodes
 void WarehouseTree::destroyTree(TreeNode* node)
 {
     if (node == nullptr) {
@@ -129,19 +129,18 @@ void WarehouseTree::destroyTree(TreeNode* node)
     delete node;
 }
 
-// constructor
 WarehouseTree::WarehouseTree()
 {
     root = nullptr;
 }
 
-// destructor
 WarehouseTree::~WarehouseTree()
 {
     destroyTree(root);
     root = nullptr;
 }
 
+// build the default warehouse layout with three zones, aisles, and shelves
 void WarehouseTree::buildLayout()
 {
     if (root != nullptr) {
@@ -188,7 +187,6 @@ void WarehouseTree::buildLayout()
     cout << "Warehouse layout built successfully.\n";
 }
 
-// displays full warehouse layout
 void WarehouseTree::displayLayout() const
 {
     if (root == nullptr) {
@@ -201,7 +199,7 @@ void WarehouseTree::displayLayout() const
     printTree(root, 0);
 }
 
-// generates a route from one location to another
+// find the path from each location to the root, then combine them at the common ancestor
 bool WarehouseTree::generateRoute(const char from[], const char to[], Route& route)
 {
     route.stepCount = 0;
@@ -212,8 +210,7 @@ bool WarehouseTree::generateRoute(const char from[], const char to[], Route& rou
     }
 
     TreeNode* sourceNode = findNode(root, from);
-
-    TreeNode* destNode = findNode(root, to);
+    TreeNode* destNode   = findNode(root, to);
 
     if (sourceNode == nullptr) {
         cout << "Error: Starting location not found.\n";
@@ -225,6 +222,7 @@ bool WarehouseTree::generateRoute(const char from[], const char to[], Route& rou
         return false;
     }
 
+    // same location, nothing to route
     if (strcmp(from, to) == 0) {
         copyText(route.steps[0], from, MAX_LOCATION_LENGTH);
         route.stepCount = 1;
@@ -237,10 +235,10 @@ bool WarehouseTree::generateRoute(const char from[], const char to[], Route& rou
     char destPath[MAX_ROUTE_STEPS][MAX_LOCATION_LENGTH];
     const int destSize = buildPathToNode(destNode, destPath);
 
+    // find the deepest node that both paths share (common ancestor)
     int commonIndex = 0;
     const int smallerSize = sourceSize < destSize ? sourceSize : destSize;
 
-    // find the last common location between starting route and destination route
     for (int i = 0; i < smallerSize; i++) {
         if (strcmp(sourcePath[i], destPath[i]) == 0) {
             commonIndex = i;
@@ -251,7 +249,7 @@ bool WarehouseTree::generateRoute(const char from[], const char to[], Route& rou
 
     int stepIndex = 0;
 
-    // move upward from the starting location to the common location first
+    // go up from the start to the common ancestor
     for (int i = sourceSize - 1; i >= commonIndex; i--) {
         if (stepIndex >= MAX_ROUTE_STEPS) {
             cout << "Error: Route is too long.\n";
@@ -263,7 +261,7 @@ bool WarehouseTree::generateRoute(const char from[], const char to[], Route& rou
         stepIndex++;
     }
 
-    // move downward from the common location to the destination after
+    // go down from the common ancestor to the destination
     for (int i = commonIndex + 1; i < destSize; i++) {
         if (stepIndex >= MAX_ROUTE_STEPS) {
             cout << "Error: Route is too long.\n";
@@ -275,14 +273,12 @@ bool WarehouseTree::generateRoute(const char from[], const char to[], Route& rou
         stepIndex++;
     }
 
-    // save the total number of steps in the route
     route.stepCount = stepIndex;
 
     cout << "Route generated successfully!\n";
     return true;
 }
 
-// displays generated route
 void WarehouseTree::displayRoute(const Route& route) const
 {
     if (route.stepCount <= 0) {
@@ -301,4 +297,10 @@ void WarehouseTree::displayRoute(const Route& route) const
     }
 
     cout << "\n";
+}
+
+// just use findNode and check if the result is not null
+bool WarehouseTree::locationExists(const char name[]) const
+{
+    return findNode(root, name) != nullptr;
 }

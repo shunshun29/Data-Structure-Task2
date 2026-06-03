@@ -1,9 +1,9 @@
 #include "OrderQueue.hpp"
 
-// ─── Constructor & Destructor ────────────────────────────────────────────────
-
+// start with an empty queue
 OrderQueue::OrderQueue() : frontPtr(nullptr), rearPtr(nullptr), count(0) {}
 
+// walk through all nodes and delete them to avoid memory leak
 OrderQueue::~OrderQueue() {
     Node* current = frontPtr;
     while (current != nullptr) {
@@ -13,8 +13,6 @@ OrderQueue::~OrderQueue() {
     }
 }
 
-// ─── Status Checks ────────────────────────────────────────────────────────────
-
 bool OrderQueue::isEmpty() const {
     return count == 0;
 }
@@ -23,14 +21,14 @@ int OrderQueue::size() const {
     return count;
 }
 
-// ─── Enqueue ──────────────────────────────────────────────────────────────────
-
+// add a new order to the back of the queue
 void OrderQueue::enqueue(const Order& order) {
     Node* newNode = new Node;
     newNode->data = order;
     newNode->next = nullptr;
 
     if (rearPtr == nullptr) {
+        // queue was empty, new node is both front and back
         frontPtr = newNode;
         rearPtr  = newNode;
     } else {
@@ -40,15 +38,15 @@ void OrderQueue::enqueue(const Order& order) {
     count++;
 }
 
-// ─── Dequeue ──────────────────────────────────────────────────────────────────
-
+// remove the front order and return it
 bool OrderQueue::dequeue(Order& order) {
     if (isEmpty()) return false;
 
-    Node* temp   = frontPtr;
-    order        = frontPtr->data;
-    frontPtr     = frontPtr->next;
+    Node* temp = frontPtr;
+    order      = frontPtr->data;
+    frontPtr   = frontPtr->next;
 
+    // if the queue is now empty, reset the rear pointer too
     if (frontPtr == nullptr) {
         rearPtr = nullptr;
     }
@@ -58,16 +56,14 @@ bool OrderQueue::dequeue(Order& order) {
     return true;
 }
 
-// ─── Peek ─────────────────────────────────────────────────────────────────────
-
+// return the front order without removing it from the queue
 bool OrderQueue::peek(Order& order) const {
     if (isEmpty()) return false;
     order = frontPtr->data;
     return true;
 }
 
-// ─── Display ─────────────────────────────────────────────────────────────────
-
+// print all orders currently in the queue
 void OrderQueue::displayPendingOrders() const {
     if (isEmpty()) {
         cout << "[OrderQueue] No pending orders." << endl;
@@ -91,4 +87,14 @@ void OrderQueue::displayPendingOrders() const {
     }
 
     cout << "------------------------------------------------------" << endl;
+}
+
+// scan through the whole queue to check if the order ID already exists
+bool OrderQueue::containsOrderId(int orderId) const {
+    Node* current = frontPtr;
+    while (current != nullptr) {
+        if (current->data.orderId == orderId) return true;
+        current = current->next;
+    }
+    return false;
 }

@@ -3,8 +3,11 @@
 
 #include "common.hpp"
 
+// binary search tree for storing and looking up warehouse items
+// items are sorted by itemId so searching is O(log n) on average
 class ItemBST {
 private:
+    // each node holds one item and links to left and right children
     struct Node {
         Item data;
         Node* left;
@@ -14,7 +17,7 @@ private:
 
     Node* root;
 
-    // Private helper functions
+    // private helpers used internally
     Node* insertHelper(Node* node, const Item& item);
     Node* searchHelper(Node* node, const char itemId[]) const;
     void searchByNameHelper(Node* node, const char name[], Item& result, bool& found) const;
