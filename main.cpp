@@ -37,7 +37,7 @@ int main() {
 
     // set up default data on startup
     cout << "=======================================================" << endl;
-    cout << "  Warehouse Robot Navigation System  —  Initializing" << endl;
+    cout << "  Warehouse Robot Navigation System  -  Initializing" << endl;
     cout << "=======================================================" << endl;
 
     // register 3 robots at the start
